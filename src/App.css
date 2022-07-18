@@ -36,3 +36,31 @@
     transform: rotate(360deg);
   }
 }
+
+body{
+  background-color: #ffffff;
+}
+
+.box{
+  background-color: rgb(158, 156, 156);
+  padding: 20px;
+  margin-top: 10px;
+  border-radius: 10px;
+  width: 25%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn {
+  margin: 20px;
+}
+
+#start-button{
+  background-color: #61dafb;
+  padding: 10px;
+  width: 5%;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+  font-size: 20px;
+}
