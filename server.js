@@ -30,38 +30,50 @@ function generateJWT(userId) {
   return jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 }
 
-function authenticate (req, res, next) {
+function authenticate(req, res, next) {
   let token = req.header("authorization");
-  
+
   if (!token) {
-    return res.status(403).send({ message: "authorization denied", isAuthenticated: false });
+    return res
+      .status(403)
+      .send({ message: "authorization denied", isAuthenticated: false });
   }
 
   token = token.split(" ")[1];
-  
+
   try {
     const verify = jwt.verify(token, jwtSecret);
 
     req.user = verify.user;
-    
+
     next();
-    
   } catch (err) {
-    res.status(401).send({ message: "Token is not valid", isAuthenticated: false });
+    res
+      .status(401)
+      .send({ message: "Token is not valid", isAuthenticated: false });
   }
-};
+}
 
-const getUser = async function (req, res) {
+
+const userLogin = function (req, res) {
   const loginUser = req.body;
-  loginUser.name = loginUser.name.trim()
-  const users = getUserFromDatabase();
+  loginUser.name = loginUser.name.trim();
 
-  const jwtToken = generateJWT(loginUser.id);
+  const users = getUserFromDatabase();
+  const findUser = users.find(
+    (u) =>
+      u.name === loginUser.name &&
+      bcrypt.compareSync(loginUser.password, u.password)
+  );
+  if (findUser) {
+    const jwtToken = generateJWT(findUser.id);
     res
       .status(201)
-      .json({ jwtToken: jwtToken, id: loginUser.id, name: loginUser.name});
-
-}
+      .json({ id: findUser.id, jwtToken: jwtToken, name: findUser.name });
+  } else {
+    res.send("User or password invalid");
+  }
+};
 
 const postNewuser = async function (request, response) {
   const newUser = request.body;
@@ -75,7 +87,9 @@ const postNewuser = async function (request, response) {
   } else if (newUser.email.length < 1) {
     response.status(400).json({ message: "Email require" });
   } else if (newUser.password.length < 8) {
-    response.status(400).json({ message: "Password require 8 or more characters" });
+    response
+      .status(400)
+      .json({ message: "Password require 8 or more characters" });
   } else if (sameUser || sameEmail) {
     response
       .status(400)
@@ -87,9 +101,12 @@ const postNewuser = async function (request, response) {
     users.push(newUser);
 
     saveUserToDatabase(users);
-    response
-      .status(201)
-      .json({ id: newUser.id, name: newUser.name, email: newUser.email, password: newUser.password});
+    response.status(201).json({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      password: newUser.password,
+    });
   }
 };
 
@@ -99,7 +116,10 @@ app.get("/users", (req, res) => {
 });
 
 app.post("/users", postNewuser);
-app.get("/login", authenticate, getUser);
+app.post("/login", userLogin);
+app.get("/prueba", authenticate, (req, res) => {
+  res.send("Token Verificado")
+})
 const port = 5000;
 app.listen(port, () => {
   console.log("Server is listening at http://localhost:" + port);
